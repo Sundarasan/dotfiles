@@ -272,6 +272,9 @@
 [maintenance]
   auto = false
   strategy = incremental
+[log]
+  decorate = auto
+  # abbrevcommit = true
 [merge]
   autoStash = true
   # conflictstyle = diff3

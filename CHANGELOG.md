@@ -2,6 +2,12 @@ As documented in the README's [adopting](README.md#how-to-adoptcustomize-the-scr
 
 For those who follow this repo, here's the changelog for ease of adoption:
 
+### 1.1-11
+
+* *[.gitconfig]* Minor changes to decorate git log.
+* *[.aliases]* Added `upreb_me` shell script that will intelligently run a shell script (if present) for the current folder or fall back to the global `git upreb` alias
+* *[.npmrc]* Set some npm configurations to hide progress bar and save the exact version into the BOM file.
+
 ### 1.1-10
 
 * *[.shellrc]* Removed 'depth' option while cloning repos since that causes rebases from the upstream repo to get corrupted.

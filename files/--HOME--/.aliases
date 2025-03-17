@@ -367,6 +367,15 @@ debug_me() {
 build_me() {
   "${PERSONAL_BIN_DIR}/build-${PWD##*/}.sh"
 }
+upreb_me() {
+  local shell_script="${PERSONAL_BIN_DIR}/upreb-${PWD##*/}.sh"
+  if is_executable "${shell_script}"; then
+    eval "${shell_script}"
+  else
+    git upreb
+  fi
+  unset shell_script
+}
 
 # findrb() {
 #   find . -iname "*.rb" -print0 | xargs -0 egrep -in --color "$@"
