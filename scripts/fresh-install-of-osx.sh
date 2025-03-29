@@ -154,6 +154,8 @@ if is_non_zero_string "${DOTFILES_DIR}" && ! is_git_repo "${DOTFILES_DIR}"; then
 
   install-dotfiles.rb
 else
+  append_to_path_if_dir_exists "${DOTFILES_DIR}/scripts"
+
   warn "skipping cloning the dotfiles repo since '$(yellow "${DOTFILES_DIR}")' is either not defined or is already a git repo"
 fi
 

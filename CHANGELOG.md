@@ -2,6 +2,12 @@ As documented in the README's [adopting](README.md#how-to-adoptcustomize-the-scr
 
 For those who follow this repo, here's the changelog for ease of adoption:
 
+### 1.1-12
+
+* *[fresh-install-of-osx.sh]* Set PATH even if dotfiles repo is present - so that future scripts can be invoked without issues.
+* *[Brewfile]* Cleaned up some softwares that I rarely use.
+* *[.tcshrc]* Removed empty file
+
 ### 1.1-11
 
 * *[.gitconfig]* Minor changes to decorate git log.
