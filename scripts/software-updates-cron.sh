@@ -65,12 +65,19 @@ else
   debug 'skipping updating omz'
 fi
 
-local firefox_profiles="${PERSONAL_PROFILES_DIR}/FirefoxProfile/Profiles"
+local firefox_profiles="${PERSONAL_PROFILES_DIR}/FirefoxProfile/Profiles/DefaultProfile"
 if is_directory "${firefox_profiles}"; then
   section_header 'Update betterfox user.js'
   curl -fsSL https://raw.githubusercontent.com/yokoffing/Betterfox/main/user.js -o "${firefox_profiles}/user.js"
 fi
 unset firefox_profiles
+
+local zen_profiles="${PERSONAL_PROFILES_DIR}/ZenProfile/Profiles/DefaultProfile"
+if is_directory "${zen_profiles}"; then
+  section_header 'Update betterzen user.js'
+  curl -fsSL https://raw.githubusercontent.com/yokoffing/Betterfox/main/zen/user.js -o "${zen_profiles}/user.js"
+fi
+unset zen_profiles
 
 local natsumi_codebase="${PROJECTS_BASE_DIR}/oss/natsumi-browser"
 if is_git_repo "${natsumi_codebase}"; then

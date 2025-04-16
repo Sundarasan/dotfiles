@@ -2,6 +2,11 @@ As documented in the README's [adopting](README.md#how-to-adoptcustomize-the-scr
 
 For those who follow this repo, here's the changelog for ease of adoption:
 
+### 1.1-13
+
+* *[Brewfile]* Removed deprecated vscode plugins.
+* *[software-updates-cron]* Fix issue with BetterFox user.js not being put in correct Firefox profile; Added BetterZen's user.js into Zen profile.
+
 ### 1.1-12
 
 * *[fresh-install-of-osx.sh]* Set PATH even if dotfiles repo is present - so that future scripts can be invoked without issues.
