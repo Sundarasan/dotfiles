@@ -92,10 +92,12 @@ allow_all_direnv_configs() {
   is_directory "${PROJECTS_BASE_DIR}" && find "${PROJECTS_BASE_DIR}" -name '.envrc' -maxdepth 5 -exec echo "===> Registering for {}" \; -execdir direnv allow \;
 }
 
-if is_macos && command_exists brew; then
-  alias bcg='brew outdated --greedy'
-  alias bcug='brew upgrade --greedy'
-  alias bupc='brew bundle check || brew bundle --all --cleanup || true; brew bundle cleanup -f || true; brew cleanup --prune=all || true; brew autoremove || true; brew upgrade || true'
+if is_macos; then
+  if command_exists brew; then
+    alias bcg='brew outdated --greedy'
+    alias bcug='brew upgrade --greedy'
+    alias bupc='brew bundle check || brew bundle --all --cleanup || true; brew bundle cleanup -f || true; brew cleanup --prune=all || true; brew autoremove || true; brew upgrade || true'
+  fi
 
   setup_login_item() {
     local app_path="/Applications/${1}.app"
@@ -207,9 +209,11 @@ pdf_to_png() {
   magick -density 800 "${pdf}" -quality 100 "${png}"
 }
 
-# associate file extensions with applications for the 'open' command
-alias -s txt="${EDITOR}"
-alias -s log="${EDITOR}"
+if is_zsh; then
+  # associate file extensions with applications for the 'open' command
+  alias -s txt="${EDITOR}"
+  alias -s log="${EDITOR}"
+fi
 
 # opens the relevant files and folders (used for laptop provisioning) in a single VSCode session
 command_exists code && alias code-gist='code "${DOTFILES_DIR}" "${PERSONAL_BIN_DIR}" "${PERSONAL_CONFIGS_DIR}" "${HOME}"/.gitconfig-* "${HOME}/.gitignore" "${HOME}/.tool-versions" "${PERSONAL_PROFILES_DIR}/.gitignore"'

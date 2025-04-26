@@ -232,15 +232,21 @@ command_exists() {
   type "${1}" &> /dev/null 2>&1
 }
 
-# Note: This function is kind of equivalent to 'omz reload', but that doesn't seem to work when installing on a vanilla OS
-load_zsh_configs() {
-  local file_list=('.zshenv' '.zshrc' '.zlogin')
-  for file in "${file_list[@]}"; do
-    load_file_if_exists "${ZDOTDIR}/${file}"
-  done
-  unset file
-  unset file_list
+is_zsh() {
+  [[ "${0}" =~ 'zsh' ]]
 }
+
+if is_zsh; then
+  # Note: This function is kind of equivalent to 'omz reload', but that doesn't seem to work when installing on a vanilla OS
+  load_zsh_configs() {
+    local file_list=('.zshenv' '.zshrc' '.zlogin')
+    for file in "${file_list[@]}"; do
+      load_file_if_exists "${ZDOTDIR}/${file}"
+    done
+    unset file
+    unset file_list
+  }
+fi
 
 append_to_path_if_dir_exists() {
   is_directory "${1}" && path+="${1}"

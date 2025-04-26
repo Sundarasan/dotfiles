@@ -11,6 +11,7 @@
 # Upgrades and cleans up all regular outdated casks and libs (non-greedy)
 
 # TODO: Need to find cask for:
+#   Battery Toolkit
 #   Picocrypt
 #   Tinkertool
 #   ZoomHider
@@ -70,6 +71,8 @@ brew 'ripgrep'
 brew 'syncthing'
 brew 'tldr'
 
+# cask 'batteryboi'
+# cask 'battery-toolkit' #, postinstall: "type setup_login_item &> /dev/null 2>&1 || source \"${HOME}/.aliases\"; setup_login_item 'Battery Toolkit'"
 cask 'aldente', postinstall: "type setup_login_item &> /dev/null 2>&1 || source \"${HOME}/.aliases\"; setup_login_item 'AlDente'"
 cask 'appcleaner'
 cask 'brave-browser'
