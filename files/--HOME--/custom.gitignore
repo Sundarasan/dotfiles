@@ -252,6 +252,7 @@ tmp/
 /.bashrc
 /.config/bat/config
 /.config/btop/btop.conf
+/.config/mise/config.toml
 /.cshrc
 /.curlrc
 /.default-gems
