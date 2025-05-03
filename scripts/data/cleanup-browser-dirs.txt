@@ -1,0 +1,15 @@
+ABphotos
+bookmarkbackups
+sessionstore-backups
+GoogleContacts
+Local Folders # Thunderbird local mail storage (often large, can be rebuilt if using IMAP/server storage)
+lnubackups
+minidumps
+SDThumbs
+smart\ mailboxes
+startupCache
+thumbnails
+*telemetry*
+weave
+crashes
+*healthreport*

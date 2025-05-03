@@ -18,9 +18,10 @@
 ################################################################################
 
 # execute 'FIRST_INSTALL=true zsh' to debug the load order of the custom zsh configuration files
-test -n "${FIRST_INSTALL+1}" && echo "loading ${0}"
+[[ -n "${FIRST_INSTALL+1}" ]] && echo "loading ${0}"
 
-type load_file_if_exists &> /dev/null 2>&1 || source "${HOME}/.shellrc"
+# Load the .shellrc here - just to define some env vars that we need before zsh lifecycle kicks in
+source "${HOME}/.shellrc"
 
 # https://blog.patshead.com/2011/04/improve-your-oh-my-zsh-startup-time-maybe.html
 skip_global_compinit=1

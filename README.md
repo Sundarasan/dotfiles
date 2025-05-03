@@ -65,7 +65,7 @@ With this latest version, the `files/--HOME--/Brewfile` will be run only with th
 
 Once the above is done, and if you have setup the [keybase](https://keybase.io)-based home repo, profile repo, etc - you can then re-import your exported preferences from the [pre-requisites section](#pre-requisite-if-you-want-to-capture-data-from-your-current-mac).
 
-Of course, you will have to manually take snapshots of your machine for backup from time-to-time as an *ongoing activity*. This can be done using the `scripts/capture-defaults.sh` script and pushing into the remote repo of your home folder. (More details can be found in the next section.)
+Of course, you will have to manually take snapshots of your machine for backup from time-to-time as an *ongoing activity*. This can be done using the `scripts/capture-prefs.sh` script and pushing into the remote repo of your home folder. (More details can be found in the next section.)
 
 As a summary, these files will typically have changes between your setup and mine:
 
@@ -73,16 +73,16 @@ As a summary, these files will typically have changes between your setup and min
 * `files/--HOME--/.gitconfig` (the `IncludeIf` line to match your global/base configuration filename)
 * `files/--HOME--/.shellrc` (`GH_USERNAME`, `KEYBASE_USERNAME`, and other changeable env vars to control which steps to perform vs which to bypass)
 * `files/--HOME--/Brewfile` (the list of applications and command-line utilities that you choose to install in your local machine)
-* `scripts/capture-defaults.sh` (what application preferences that you choose to backup - based on the entries in the `Brewfile`)
+* `scripts/capture-prefs.sh` (what application preferences that you choose to backup - based on the entries in the `Brewfile`)
 * `scripts/fresh-install-of-osx.sh` (what applications you choose to set as login items on every reboot)
 
 # Ongoing tasks to keep your backup up-to-date on a regular basis
 
 The backup strategy is **not a one-off activity**. It will require you to take snapshots from time-to-time. Similarly, adherance to maintainence of the "catalogs" will need to be strictly upheld for the backup strategy to be effective.
 
-* Ensure that the software catalogs (`files/--HOME--/Brewfile`, `scripts/fresh-install-of-osx.sh`, `scripts/capture-defaults.sh`) are always kept in sync with the actual applications that you install and use
+* Ensure that the software catalogs (`files/--HOME--/Brewfile`, `scripts/fresh-install-of-osx.sh`, `scripts/capture-prefs.sh`) are always kept in sync with the actual applications that you install and use
 * Ensure that the git repo catalogs that you are "tracking" in the `${PERSONAL_CONFIGS_DIR}/repositories-*.yml` files are kept up-to-date so that resurrection in your new machine will be seamless
-* Ensure to run the `scripts/capture-defaults.sh` (with the export switch) to export and capture/backup your preferences for all installed applications from your current machine. If you want to automate the repetitive running of this and possibly other scripts/commands, you can use the system-level cronjobs to set this up!
+* Ensure to run the `scripts/capture-prefs.sh` (with the export switch) to export and capture/backup your preferences for all installed applications from your current machine. If you want to automate the repetitive running of this and possibly other scripts/commands, you can use the system-level cronjobs to set this up!
 
 # Extras/Details
 

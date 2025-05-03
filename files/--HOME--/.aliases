@@ -10,7 +10,7 @@
 ################################################################################
 
 # execute 'FIRST_INSTALL=true zsh' to debug the load order of the custom zsh configuration files
-test -n "${FIRST_INSTALL+1}" && echo "loading ${0}"
+[[ -n "${FIRST_INSTALL+1}" ]] && echo "loading ${0}"
 
 # DUPLICATE! Copied over since we get an error if the .shellrc was not loaded
 type command_exists &> /dev/null 2>&1 || source "${HOME}/.shellrc"
@@ -59,16 +59,28 @@ if command_exists 'run_all.sh'; then
   alias all="FOLDER='${HOME}' MAXDEPTH=6 rug"
   alias home="FOLDER='${HOME}' FILTER=\".bin|zsh|mise\" MAXDEPTH=5 rug"
   is_directory "${PERSONAL_PROFILES_DIR}" && alias profiles="FOLDER='${PERSONAL_PROFILES_DIR}' MAXDEPTH=5 rug"
-  is_directory "${PROJECTS_BASE_DIR}" && alias upreb="FOLDER='${PROJECTS_BASE_DIR}' rug upreb; command_exists profiles && profiles upreb"
-  for folder in $(ls "${PROJECTS_BASE_DIR}"); do
-    is_directory "${PROJECTS_BASE_DIR}/${folder}" && alias "${folder}"="FOLDER='${PROJECTS_BASE_DIR}/${folder}' MAXDEPTH=4 rug"
-  done
+  if is_directory "${PROJECTS_BASE_DIR}"; then
+    alias upreb="FOLDER='${PROJECTS_BASE_DIR}' rug upreb; command_exists profiles && profiles upreb"
+
+    # Use zsh glob qualifiers to only loop if matches exist and are directories
+    # (N) nullglob: if no match, the pattern expands to nothing
+    # (/): only match directories
+    local project_folders=("${PROJECTS_BASE_DIR}"/*/(N/))
+    if [[ ${#project_folders[@]} -gt 0 ]]; then
+      for folder_path in "${project_folders[@]}"; do
+        alias "${folder_path:t}"="FOLDER='${folder_path}' MAXDEPTH=4 rug" # Use :t to get the tail (basename)
+      done
+      unset folder_path
+    fi
+  fi
 fi
 
 # deletes the zsh compiled files so that they can be recompiled whenever a new terminal session is next started
 delete_zsh_compilations() {
-  find "${HOME}" -maxdepth 6 -name "*.zwc*" ! -path "**/node_modules/**" -exec rm -rfv {} \;
-  find "${HOMEBREW_PREFIX}" -maxdepth 6 -name "*.zwc*" ! -path "**/node_modules/**" -exec rm -rfv {} \;
+  local prune_paths=(-path '*/.git/*' -o -path '*/node_modules/*' -o -path '*/.mypy_cache/*' -o -path '*/__pycache__/*')
+  # Find and remove .zwc files, pruning common large/irrelevant directories
+  find "${HOME}" \( "${prune_paths[@]}" \) -prune -o -maxdepth 6 -name '*.zwc*' -type f -print -delete || warn "find command failed in ${HOME}"
+  find "${HOMEBREW_PREFIX}" \( "${prune_paths[@]}" \) -prune -o -maxdepth 6 -name '*.zwc*' -type f -print -delete || warn "find command failed in ${HOMEBREW_PREFIX}"
 }
 
 install_mise_versions() {
@@ -87,9 +99,10 @@ install_mise_versions() {
 allow_all_direnv_configs() {
   ! command_exists direnv && warn "Couldn't find 'direnv' in the PATH; Skipping allowing all direnv configs" && return
 
-  find "${HOME}" -name '.envrc' -maxdepth 1 -exec echo "===> Registering for {}" \; -execdir direnv allow \;
-  is_directory "${PERSONAL_PROFILES_DIR}" && find "${PERSONAL_PROFILES_DIR}" -name '.envrc' -maxdepth 1 -exec echo "===> Registering for {}" \; -execdir direnv allow \;
-  is_directory "${PROJECTS_BASE_DIR}" && find "${PROJECTS_BASE_DIR}" -name '.envrc' -maxdepth 5 -exec echo "===> Registering for {}" \; -execdir direnv allow \;
+  local prune_paths=(-path '*/.git/*' -o -path '*/node_modules/*' -o -path '*/.mypy_cache/*' -o -path '*/__pycache__/*')
+  find "${HOME}" -maxdepth 1 -name '.envrc' -print -execdir direnv allow \;
+  is_directory "${PERSONAL_PROFILES_DIR}" && find "${PERSONAL_PROFILES_DIR}" -maxdepth 1 -name '.envrc' -print -execdir direnv allow \;
+  is_directory "${PROJECTS_BASE_DIR}" && find "${PROJECTS_BASE_DIR}" \( "${prune_paths[@]}" \) -prune -o -maxdepth 5 -name '.envrc' -print -execdir direnv allow \;
 }
 
 if is_macos; then
@@ -98,43 +111,34 @@ if is_macos; then
     alias bcug='brew upgrade --greedy'
     alias bupc='brew bundle check || brew bundle --all --cleanup || true; brew bundle cleanup -f || true; brew cleanup --prune=all || true; brew autoremove || true; brew upgrade || true'
   fi
-
-  setup_login_item() {
-    local app_path="/Applications/${1}.app"
-    if is_directory "${app_path}"; then
-      local found=$(osascript -e 'tell application "System Events" to get the name of every login item' | \grep -i "${1}")
-      if ! is_non_zero_string "${found}"; then
-        osascript -e "tell application \"System Events\" to make login item at end with properties {path:\"${app_path}\", hidden:false}" 2>&1 > /dev/null
-        success "Successfully setup '$(yellow "${1}")' as a login item"
-      fi
-      unset found
-    else
-      warn "Couldn't find application '$(yellow "${app_path}")' and so skipping setting up as a login item"
-    fi
-    unset app_path
-  }
 fi
 
-alias findbrokenlinks='find . -type l | (while read FN ; do test -e "${FN}" || ls -ld "${FN}"; done)'
+alias findbrokenlinks='find . -xtype l -print' # Find links whose targets do not exist
 alias clearlogs='rm -rfv */log/*.log'
 alias clearcoverage='rm -rfv */coverage */coverage.data'
-alias killds="sudo find . -type f -name .DS_Store -exec rm -rfv {} \;"
-alias killloc="sudo find . -type f -name .localized -exec rm -rfv {} \;"
+alias killds="sudo find . -type f -name .DS_Store -print -delete"
+alias killloc="sudo find . -type f -name .localized -print -delete"
 
 # Remove trailing spaces
-if is_linux; then
-  alias remove_trailing="find . -type f \( -name '*.*cs*' -o -name '*.*less' -o -name '*.*js*' -o -name '*.*rb' -o -name '*.*ml' -o -name '*.rake' -o -name '*.java' -o -name '*.ts*' \) -exec sed -i 's/[ ]*$//' {} \;"
-elif is_windows; then
-  alias remove_trailing="find . -type f \( -name '*.*cs*' -o -name '*.*less' -o -name '*.*js*' -o -name '*.*rb' -o -name '*.*ml' -o -name '*.rake' -o -name '*.java' -o -name '*.ts*' \) -exec sed -i 's/[ ]*$//' {} \;"
+_remove_trailing_find_cmd="find . -type f \( -name '*.*cs*' -o -name '*.*less' -o -name '*.*js*' -o -name '*.*rb' -o -name '*.*ml' -o -name '*.rake' -o -name '*.java' -o -name '*.ts*' \) -print0"
+if is_linux || is_windows; then
+  # Linux/WSL/Cygwin sed uses -i without an argument for backup suffix
+  alias remove_trailing="${_remove_trailing_find_cmd} | xargs -0 sed -i 's/[ ]*$//'"
 elif is_macos; then
-  alias remove_trailing="find . -type f \( -name '*.*cs*' -o -name '*.*less' -o -name '*.*js*' -o -name '*.*rb' -o -name '*.*ml' -o -name '*.rake' -o -name '*.java' -o -name '*.ts*' \) -exec sed -i '' 's/[ ]*$//' {} \;"
+  # macOS sed requires an argument for -i ('' for no backup)
+  alias remove_trailing="${_remove_trailing_find_cmd} | xargs -0 sed -i '' 's/[ ]*$//'"
 fi
+unset _remove_trailing_find_cmd
 
 # generate mac addr to escape some free wifi mac addr restrictions
-if is_linux; then
-  alias free-wifi="(ifconfig eth0 | grep ether) && (openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//' | xargs sudo ifconfig eth0 ether) && (ifconfig eth0 | grep ether)"
-elif is_macos; then
-  alias free-wifi="(ifconfig en0 | grep ether) && (openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//' | xargs sudo ifconfig en0 ether) && (ifconfig en0 | grep ether)"
+_free_wifi() {
+  local interface="${1}"
+  (ifconfig "${interface}" | grep ether) && \
+  (openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//' | xargs sudo ifconfig "${interface}" ether) && \
+  (ifconfig "${interface}" | grep ether)
+}
+if is_linux; then alias free-wifi='_free_wifi eth0'
+elif is_macos; then alias free-wifi='_free_wifi en0'
   alias flush-dns="sudo killall -HUP mDNSResponder;sudo killall mDNSResponderHelper;sudo dscacheutil -flushcache;say MacOS DNS cache has been cleared"
 fi
 
@@ -258,10 +262,16 @@ status_all_repos() {
   _status_repo "${HOME}"
   _status_repo "${DOTFILES_DIR}"
   _status_repo "${PERSONAL_PROFILES_DIR}"
-  for folder in "${PERSONAL_PROFILES_DIR}"/*Profile/Profiles/DefaultProfile/chrome; do
-    _status_repo "${folder}"
-  done
-  unset folder
+  # Use zsh glob qualifiers to only loop if matches exist and are directories
+  # (N) nullglob: if no match, the pattern expands to nothing
+  # (/): only match directories
+  local chrome_folders=("${PERSONAL_PROFILES_DIR}"/*Profile/Profiles/DefaultProfile/chrome(N/))
+  if [[ ${#chrome_folders[@]} -gt 0 ]]; then
+    for folder in "${chrome_folders[@]}"; do
+      _status_repo "${folder}"
+    done
+    unset folder
+  fi
 }
 
 # counts the number of commits in the specified repo
@@ -280,7 +290,7 @@ count_all_repos() {
   # Note: not interested in the count for the ZenProfile's chrome folder since that's an external repo
 }
 
-# pushes the specified repo (disables and re-enables cron while doing this operation)
+# pushes the specified repo
 # internal function: not to be called separately
 _push_repo() {
   ! is_git_repo "${1}" && warn "skipping pushing the repo since '$(yellow "${1}")' doesn't exist or is not a git repo" && return
@@ -380,26 +390,6 @@ upreb_me() {
   fi
   unset shell_script
 }
-
-# findrb() {
-#   find . -iname "*.rb" -print0 | xargs -0 egrep -in --color "$@"
-# }
-
-# findyml() {
-#   find . -iname "*.yml" -print0 | xargs -0 egrep -in --color "$@"
-# }
-
-# findrake() {
-#   find . -iname "*.rake" -print0 | xargs -0 egrep -in --color "$@"
-# }
-
-# findhtmlerb() {
-#   find . -iname "*.html.erb" -print0 | xargs -0 egrep -in --color "$@"
-# }
-
-# findjs() {
-#   find . -iname "*.js*" -print0 | xargs -0 egrep -in --color "$@"
-# }
 
 # rails
 # alias rs="rails s -b 0.0.0.0"

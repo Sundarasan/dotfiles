@@ -15,11 +15,11 @@
 # https://blog.mattclemente.com/2020/06/26/oh-my-zsh-slow-to-load/
 
 # execute 'FIRST_INSTALL=true zsh' to debug the load order of the custom zsh configuration files
-test -n "${FIRST_INSTALL+1}" && echo "loading ${0}"
+[[ -n "${FIRST_INSTALL+1}" ]] && echo "loading ${0}"
 
 # for profiling zsh, see: https://unix.stackexchange.com/a/329719/27109
-# execute 'ZSH_PROFILE_RC=true zsh' and run 'zprof' to get the details
-test -n "${ZSH_PROFILE_RC+1}" && zmodload zsh/zprof
+# execute 'ZSH_PROFILE_RC=true zsh -i -c exit' and run 'zprof' to get the details
+[[ -n "${ZSH_PROFILE_RC+1}" ]] && zmodload zsh/zprof
 
 type load_file_if_exists &> /dev/null 2>&1 || source "${HOME}/.shellrc"
 
@@ -33,7 +33,7 @@ load_file_if_exists "${HOME}/.p10k.zsh"
 load_file_if_exists "${HOMEBREW_PREFIX}/share/powerlevel10k/powerlevel10k.zsh-theme"
 
 # Path to your Oh My Zsh installation.
-export ZSH="${HOME}/.oh-my-zsh"
+export ZSH="${ZDOTDIR:-${HOME}}/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time Oh My Zsh is loaded, in which case,
@@ -93,7 +93,7 @@ export ENABLE_CORRECTION="true"
 # Uncomment the following line if you want to disable marking untracked files
 # under VCS as dirty. This makes repository status check for large repositories
 # much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
+DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
@@ -114,7 +114,7 @@ export ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 # Custom plugins may be added to ${ZSH_CUSTOM}/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(brew direnv eza fast-syntax-highlighting git git-extras iterm2 mise sudo zbell zsh-autosuggestions)
+plugins=(brew direnv eza fast-syntax-highlighting git iterm2 mise sudo zbell zsh-autosuggestions)
 
 # according to https://github.com/zsh-users/zsh-completions/issues/603#issue-373185486, this can't be added as a plugin to omz for the fpath to work correctly
 append_to_fpath_if_dir_exists "${ZSH_CUSTOM}/plugins/zsh-completions/src"
@@ -128,7 +128,7 @@ load_file_if_exists "${ZSH}/oh-my-zsh.sh"
 # export LANG=en_US.UTF-8
 
 # Preferred editor for remote sessions
-test -n "${SSH_CONNECTION}" && export EDITOR="vi"
+is_non_zero_string "${SSH_CONNECTION}" && export EDITOR="vi"
 # Use code if its installed (both Mac OSX and Linux)
 command_exists code && ! is_non_zero_string "${EDITOR}" && export EDITOR="code --wait"
 # If neither of the above works, then fall back to vi
@@ -326,4 +326,4 @@ typeset -gU cdpath CPPFLAGS cppflags FPATH fpath infopath LDFLAGS ldflags MANPAT
 
 # for profiling zsh, see: https://unix.stackexchange.com/a/329719/27109
 # execute 'ZSH_PROFILE_RC=true zsh' and run 'zprof' to get the details
-test -n "${ZSH_PROFILE_RC+1}" && zprof
+[[ -n "${ZSH_PROFILE_RC+1}" ]] && zprof

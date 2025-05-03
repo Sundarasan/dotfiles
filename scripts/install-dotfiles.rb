@@ -18,48 +18,109 @@ require 'fileutils'
 require 'find'
 require 'pathname'
 
-def override_into_home_folder(file, dotfiles_dir_length)
-  # git doesn't handle symlinks for its core configuration files, so files with 'custom.git' in their name have to be handled separately
-  relative_file_name = file[dotfiles_dir_length..-1].gsub('custom.git', '.git')
-
+# Helper to interpolate environment variables in paths like --VAR--
+def interpolate_path(path_template, source_file_for_context)
   # process folder names having '--' in their name (strings within two pairs of '--' will refer to env variables)
   # if tne env var is not defined, then skip processing that file
-  relative_file_name.gsub!(/--(.*?)--/) { ENV[$1] || (puts "**WARN** Skipping processing of '#{relative_file_name}' since the env var '#{$1}' was not defined".yellow; return) }
+  env_vars_ok = true
+  interpolated_path = path_template.gsub(/--(.*?)--/) do |match|
+    var_name = $1
+    if ENV[var_name]
+      ENV[var_name]
+    else
+      puts "**WARN** Skipping processing involving '#{source_file_for_context}' because env var '#{var_name}' was not defined".yellow
+      env_vars_ok = false
+      match # Return the original match if skipping to avoid partial substitution issues
+    end
+  end
+  env_vars_ok ? interpolated_path : nil
+end
 
-  # since some env var might already contain the full path from the root...
-  target_file_name = relative_file_name.start_with?(HOME) ? relative_file_name : File.join(HOME, relative_file_name)
+# Processes a single dotfile: moves existing real files, creates symlink/copy
+def process_dotfile(source_file, target_file)
+  puts "Processing #{source_file.yellow} --> #{target_file.yellow}"
 
-  puts "Processing #{file.yellow} --> #{target_file_name.yellow}"
+  # Ensure target directory exists
+  target_dir = File.dirname(target_file)
+  # Use mkdir_p directly - it's idempotent and handles existence checks internally.
+  FileUtils.mkdir_p(target_dir, verbose: false)
 
-  # create the nested folder for the target
-  FileUtils.mkdir_p(File.dirname(target_file_name))
+  begin
+    # Check target status before deciding action
+    if File.symlink?(target_file)
+      puts "  Target #{target_file.cyan} exists as a symlink, will overwrite.".blue
+      # Proceed to ln_sf or cp which will overwrite
+    elsif File.exist?(target_file) # It exists and is not a symlink (real file/dir)
+      puts "  Moving existing file #{target_file.cyan} to #{source_file.cyan} (backup)".blue
+      FileUtils.mv(target_file, source_file, force: true, verbose: false)
+    else
+      # Target does not exist, no backup needed
+      puts "  Target #{target_file.cyan} does not exist, creating new link/copy.".blue
+    end
 
-  # move the real file into the repo folder
-  FileUtils.mv(target_file_name, file, force: true, verbose: true) if File.exist?(target_file_name) && !File.symlink?(target_file_name)
-
-  # copy/symlink from repo to target location
-  file.match?(/custom\.git/) ? FileUtils.cp(file, target_file_name) : FileUtils.ln_sf(file, target_file_name)
+    # Create symlink or copy file
+    if source_file.match?(/custom\.git/) # Special handling for git files
+      puts "  Copying #{source_file.cyan} to #{target_file.cyan}".blue
+      FileUtils.cp(source_file, target_file, verbose: false)
+    else
+      puts "  Creating symlink from #{source_file.cyan} to #{target_file.cyan}".blue
+      FileUtils.ln_sf(source_file, target_file, verbose: false)
+    end
+  rescue StandardError => e
+    puts "**ERROR** Failed during processing of #{source_file} -> #{target_file}: #{e.message}".red
+  end
 end
 
 puts 'Starting to install dotfiles'.green
 HOME = ENV['HOME']
 dotfiles_dir = File.expand_path(File.join(__dir__, '..', 'files'))
-dotfiles_dir_length = dotfiles_dir.length + 1
-Find.find(dotfiles_dir) do |file|
-  next if File.directory?(file) || file.end_with?('.DS_Store') || file.match?(/\.zwc/)
-  override_into_home_folder(file, dotfiles_dir_length)
+dotfiles_dir_length = dotfiles_dir.length + 1 # Length of the base path + '/'
+
+Find.find(dotfiles_dir) do |source_path|
+  next if File.directory?(source_path) || source_path.end_with?('.DS_Store') || source_path.match?(/\.zwc/)
+
+  # git doesn't handle symlinks well for its core config, handle separately
+  relative_file_name = source_path[dotfiles_dir_length..-1].gsub('custom.git', '.git')
+
+  interpolated_relative_name = interpolate_path(relative_file_name, source_path)
+  next unless interpolated_relative_name # Skip if env var interpolation failed
+
+  # since some env var might already contain the full path from the root...
+  target_file_name = interpolated_relative_name.start_with?(HOME) ? interpolated_relative_name : File.join(HOME, interpolated_relative_name)
+  process_dotfile(source_path, target_file_name)
 end
 
 ssh_folder = Pathname.new(HOME) + '.ssh'
 default_ssh_config = ssh_folder + 'config'
-# Note: '${HOME}/.ssh/global_config' symlink will exist from the above lines
-if (ssh_folder + 'global_config').exist?
+global_config_link = ssh_folder + 'global_config' # The symlink potentially created above
+
+# Check if the global_config symlink exists and points to a valid file
+if global_config_link.symlink? && global_config_link.exist?
   FileUtils.touch(default_ssh_config) unless default_ssh_config.exist?
 
   include_line = 'Include ${HOME}/.ssh/global_config'
-  last_two_lines = default_ssh_config.readlines(chomp: true)[-2..-1] || []
+  include_line_present = false
+  begin
+    # Read lines to check precisely, handling potential comments or variations
+    default_ssh_config.readlines.each do |line|
+      if line.strip == include_line.strip # Check content ignoring leading/trailing whitespace
+        include_line_present = true
+        break
+      end
+    end
 
-  File.write(default_ssh_config, "\n#{include_line}\n", mode: 'a+') unless last_two_lines.include?(include_line)
+    unless include_line_present
+      puts "Adding '#{include_line}' to #{default_ssh_config}".blue
+      # Append with surrounding newlines for safety
+      File.write(default_ssh_config, "\n#{include_line}\n", mode: 'a')
+    else
+      puts "'#{include_line}' already present in #{default_ssh_config}".green
+    end
+  rescue StandardError => e
+    puts "**ERROR** Failed processing SSH config #{default_ssh_config}: #{e.message}".red
+  end
+else
+  puts "**WARN** Skipping SSH config update because '#{global_config_link}' does not exist or is not a symlink.".yellow
 end
 
 puts "Since the '.gitignore' and '.gitattributes' files are COPIED over, any new changes being pulled in (from a newer version of the upstream repo) need to be manually reconciled between this repo and your home and profiles folders".red

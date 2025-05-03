@@ -6,7 +6,13 @@
 # It assumes that a pre-existing repo on local is present - so that it can capture the relevant remote details.
 # It will force removal of history if the `-f` flag is given. (The history of the profiles repo will always get deleted).
 
-type command_exists &> /dev/null 2>&1 || source "${HOME}/.shellrc"
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+# Source shell helpers if they aren't already loaded (check for one representative function)
+if ! type red &> /dev/null 2>&1 || ! type strip_trailing_slash &> /dev/null 2>&1; then
+  source "${HOME}/.shellrc"
+fi
 
 usage() {
   echo "$(red 'Usage'): $(yellow "${1} [-f] <repo folder>")"
@@ -33,26 +39,26 @@ fi
 # Remove trailing slash if present
 folder="$(strip_trailing_slash "${folder}")"
 
-! is_git_repo "${folder}" && error "'${folder}' is not a git repo. Please specify the root of a git repo to proceed. Aborting!!!"
-
 # For the profiles repo alone, I don't care about retaining the history
 [[ "$(extract_last_segment "${folder}")" == "${KEYBASE_PROFILES_REPO_NAME}" ]] && force=Y
+
+! is_git_repo "${folder}" && error "'${folder}' is not a git repo. Please specify the root of a git repo to proceed. Aborting!!!"
 
 echo "$(yellow 'Processing folder'): '${folder}'"
 echo "$(yellow "Squash commits (will lose history!)"): '${force}'"
 
 extract_git_config_value() {
-  git -C "${folder}" config "${1}" || exit 1 # Most likely reason for exiting is if the required git configuration hasn't been set
+  git -C "${folder}" config --get "${1}" || error "Failed to get git config value '${1}' for folder '${folder}'"
 }
 
 # Remove crontab while this script is running
 crontab -r &> /dev/null 2>&1
 
 # Capture information from pre-existing git repo
-git_url="$(extract_git_config_value remote.origin.url)"
-git_user_name="$(extract_git_config_value user.name)"
-git_user_email="$(extract_git_config_value user.email)"
-git_branch_name="$(git -C "${folder}" branch --show-current)"
+local git_url="$(extract_git_config_value remote.origin.url)"
+local git_user_name="$(extract_git_config_value user.name)"
+local git_user_email="$(extract_git_config_value user.email)"
+local git_branch_name="$(git -C "${folder}" branch --show-current)"
 
 echo "$(yellow 'Repo url'): '${git_url}'"
 echo "$(yellow 'User name'): '${git_user_name}'"
@@ -86,18 +92,18 @@ SKIP_SIZE_BEFORE=1 git -C "${folder}" cc
 if [[ "${git_url}" =~ 'keybase' ]]; then
   echo "$(blue 'Recreating') '$(yellow "${git_url}")'"
 
-  ! command_exists keybase && error 'Keybase not found in the PATH. Aborting!!!'
+  ! command_exists keybase && error "'keybase' command not found in the PATH. Aborting!!!"
 
   local git_remote_repo_name="$(extract_last_segment "${git_url}")"
-  keybase git delete -f "${git_remote_repo_name}"
-  keybase git create "${git_remote_repo_name}"
+  keybase git delete -f "${git_remote_repo_name}" || error "Failed to delete keybase repo '${git_remote_repo_name}'"
+  keybase git create "${git_remote_repo_name}" || error "Failed to create keybase repo '${git_remote_repo_name}'"
   unset git_remote_repo_name
 fi
 
 echo "$(blue 'Pushing') from $(yellow "${folder}") to $(yellow "${git_url}")"
 git -C "${folder}" push -fuq origin "${git_branch_name}"
 
-rm -fv "${folder}/.git/index.lock"
+rm -f "${folder}/.git/index.lock"
 
 git -C "${folder}" size
 
@@ -105,8 +111,4 @@ git -C "${folder}" size
 load_zsh_configs
 recron
 
-unset git_url
-unset git_user_name
-unset git_user_email
-unset git_branch_name
 unset folder

@@ -6,17 +6,29 @@
 # This will persist through software updates unlike changes directly made to '/etc/pam.d/sudo'
 # Copied from: https://apple.stackexchange.com/a/466029
 
-type is_file &> /dev/null 2>&1 || source "${HOME}/.shellrc"
-type warn &> /dev/null 2>&1 || source "${HOME}/.shellrc"
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+# Check for one representative function to see if sourcing is needed
+if ! type is_file &> /dev/null 2>&1 || ! type warn &> /dev/null 2>&1 ; then
+  source "${HOME}/.shellrc"
+fi
 
 if ! ioreg -c AppleBiometricSensor | grep -q AppleBiometricSensor; then
   warn 'Touch ID hardware is not detected. Skipping configuration.'
-  return
+  exit 0 # Exit successfully as no action is needed
 fi
 
-if ! is_file /etc/pam.d/sudo_local; then
-  sudo sh -c 'sed "s/^#auth/auth/" /etc/pam.d/sudo_local.template > /etc/pam.d/sudo_local'
-  success 'Created new file: /etc/pam.d/sudo_local'
+local template_file="/etc/pam.d/sudo_local.template"
+! is_file "${template_file}" && error "Template file '${template_file}' not found!"
+
+local target_file="/etc/pam.d/sudo_local"
+if ! is_file "${target_file}"; then
+  # Using sh -c 'sed...' is fine here
+  sudo sh -c "sed 's/^#auth/auth/' ${template_file} > ${target_file}" || error "Failed to create ${target_file}"
+  success "Created new file: '$(yellow "${target_file}")'"
 else
-  warn "'$(yellow '/etc/pam.d/sudo_local')' is already present - not creating again"
+  warn "'$(yellow "${target_file}")' is already present - not creating again"
 fi
+unset target_file
+unset template_file

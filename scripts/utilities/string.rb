@@ -27,4 +27,5 @@ class String
   def light_blue
     colorize(36)
   end
+  alias :cyan :light_blue
 end

@@ -21,6 +21,7 @@ usage(0) if ARGV[0] == '--help'
 usage if ARGV.length != 2 || !['-g', '-r', '-c'].include?(ARGV[0])
 
 require 'fileutils'
+require 'set'
 require 'yaml'
 
 # frozen string constants (defined for performance)
@@ -32,10 +33,6 @@ POST_CLONE_KEY_NAME = 'post_clone'.freeze
 # utility functions
 def nil_or_empty?(val)
   val.nil? || val.empty?
-end
-
-def stringify(hash)
-  hash.map { |k, v| [k.to_s, v.is_a?(Hash) ? stringify(v) : v] }.to_h
 end
 
 def justify(num)
@@ -89,19 +86,27 @@ end
 # main functions
 def generate_each(git_dir)
   git_cmd = "git -C #{git_dir}"
-  remotes = `#{git_cmd} remote`
-  hash = { folder: git_dir, remote: find_git_remote_url(git_cmd, ORIGIN_NAME), active: true }
-  remotes.split.compact.each do |remote|
-    next if nil_or_empty?(remote) || nil_or_empty?(remote.strip)
+  hash = { folder: git_dir, active: true }
+  other_remotes = {}
 
-    remote.strip!
-    next if remote == ORIGIN_NAME
+  # Get all remotes and their fetch URLs in one call
+  remote_output = `#{git_cmd} remote -v`
+  remote_output.lines.each do |line|
+    name, url, type = line.split
+    next unless type == '(fetch)' # Only consider fetch URLs to avoid duplicates
 
-    hash[OTHER_REMOTES_KEY_NAME] ||= {}
-    hash[OTHER_REMOTES_KEY_NAME][remote] = find_git_remote_url(git_cmd, remote)
+    if name == ORIGIN_NAME
+      hash[:remote] = url # Set the primary remote URL
+    else
+      other_remotes[name] = url
+    end
   end
-  hash.delete(OTHER_REMOTES_KEY_NAME) if nil_or_empty?(hash[OTHER_REMOTES_KEY_NAME])
-  stringify(hash)
+
+  # Fallback if origin wasn't found via `remote -v` (unlikely but safe)
+  hash[:remote] ||= find_git_remote_url(git_cmd, ORIGIN_NAME)
+
+  hash[OTHER_REMOTES_KEY_NAME] = other_remotes unless other_remotes.empty?
+  hash
 end
 
 def resurrect_each(repo, idx, total)
@@ -110,20 +115,45 @@ def resurrect_each(repo, idx, total)
 
   puts "***** Resurrecting [#{justify(idx + 1)} of #{justify(total)}]: #{folder} *****".green
   git_cmd = "git -C #{folder}"
+
+  existing_remotes = {} # Store existing remotes {name => url}
   if git_repo?(folder)
-    puts 'Already an existing git repo with the following remotes:'.yellow
-    system("#{git_cmd} remote -vv")
+    puts 'Already an existing git repo. Checking remotes...'.yellow
+    remote_output = `#{git_cmd} remote -v`
+    remote_output.lines.each do |line|
+      name, url, type = line.split
+      existing_remotes[name] = url if type == '(fetch)'
+    end
+    puts "Existing remotes: #{existing_remotes.keys.join(', ')}" unless existing_remotes.empty?
   else
-    system("source \"#{ENV['HOME']}/.shellrc\" && clone_repo_into \"#{repo['remote']}\" \"#{folder}\"") || abort("Couldn't clone the repo since the folder is not empty; aborting")
+    clone_success = system("source \"#{ENV['HOME']}/.shellrc\" && clone_repo_into \"#{repo['remote']}\" \"#{folder}\"")
+    abort("Failed to clone '#{repo['remote']}' into '#{folder}'; aborting".red) unless clone_success
+    # After successful clone, origin should exist
+    existing_remotes[ORIGIN_NAME] = repo['remote'] # Assume origin matches the cloned URL
   end
 
+  # Add missing 'other_remotes'
   Array(repo[OTHER_REMOTES_KEY_NAME]).each do |name, remote|
-    system("#{git_cmd} remote add #{name} #{remote}") if find_git_remote_url(git_cmd, name).empty?
+    if !existing_remotes.key?(name) # Check against the fetched list
+      puts "Adding remote '#{name}' -> '#{remote}'".blue
+      add_remote_success = system("#{git_cmd} remote add #{name} #{remote}")
+      puts "WARNING: Failed to add remote '#{name}' for repo '#{folder}'".yellow unless add_remote_success
+    elsif existing_remotes[name] != remote
+      # Remote exists but URL is different
+      puts "Updating remote '#{name}' URL from '#{existing_remotes[name]}' to '#{remote}'".blue
+      update_remote_success = system("#{git_cmd} remote set-url #{name} #{remote}")
+      puts "WARNING: Failed to update URL for remote '#{name}' in repo '#{folder}'".yellow unless update_remote_success
+    end
   end if repo[OTHER_REMOTES_KEY_NAME]
 
-  system("#{git_cmd} fetch -q --all --tags")
+  puts "Fetching all remotes and tags...".blue
+  fetch_success = system("#{git_cmd} fetch -q --all --tags")
+  puts "WARNING: Failed to fetch for repo '#{folder}'".yellow unless fetch_success
 
-  Dir.chdir(folder) { system(Array(repo[POST_CLONE_KEY_NAME]).join(';')) } if repo[POST_CLONE_KEY_NAME]
+  if repo[POST_CLONE_KEY_NAME]
+    puts "Running post-clone commands...".blue
+    Dir.chdir(folder) { system(Array(repo[POST_CLONE_KEY_NAME]).join(';')) || puts("WARNING: Post-clone command failed for repo '#{folder}'".yellow) }
+  end
 end
 
 def verify_all(repositories, filter)
@@ -134,7 +164,12 @@ def verify_all(repositories, filter)
   local_folders = find_git_repos_from_disk(ref_folder || ENV['HOME'])
   local_folders = apply_filter(local_folders, filter).compact.sort.uniq
 
-  diff_repos = local_folders - yml_folders | yml_folders - local_folders
+  # Convert to Sets for potentially faster difference/union operations on large lists
+  yml_set = Set.new(yml_folders)
+  local_set = Set.new(local_folders)
+  diff_repos_set = (local_set - yml_set) | (yml_set - local_set)
+  diff_repos = diff_repos_set.to_a.sort # Convert back to sorted array for consistent output
+
   if diff_repos.any?
     puts "Please correlate the following #{diff_repos.length} differences projects manually:\n#{diff_repos.join("\n")}".red
     exit(-1)

@@ -12,8 +12,8 @@
 # 2. Brightness on battery
 # 3. Keyboard brightness
 
-script_start_time=$(date +%s)
-echo "==> Script started at: $(date)"
+local start_time_seconds=$(date +%s)
+echo "Script started at: $(date '+%Y-%m-%d %H:%M:%S')"
 
 #############################################################
 # Utility scripts and env vars used only within this script #
@@ -25,19 +25,11 @@ clone_omz_plugin_if_not_present() {
   clone_repo_into "${1}" "${ZSH_CUSTOM}/plugins/$(extract_last_segment "${1}")"
 }
 
-ensure_safe_load_direnv() {
-  if [[ "$(pwd)" == "${1}" ]]; then
-    pushd ..; popd
-  else
-    pushd "${1}"; pushd ..; popd; popd
-  fi
-  success "Successfully allowed 'direnv' config for '$(yellow "${1}")'"
-}
-
 ######################################################################################################################
 # Set DNS of 8.8.8.8 before proceeding (in some cases, for eg Jio Wifi, github doesn't resolve at all and times out) #
 ######################################################################################################################
-if test -n "$(curl ipinfo.io | \grep -i jio)"; then
+# Fetch only organization and grep quietly (-q) and case-insensitively (-i) for Jio ISP
+if curl -fsS ipinfo.io/org | grep -qi 'jio'; then
   echo '==> Setting DNS for WiFi'
   sudo networksetup -setdnsservers Wi-Fi 8.8.8.8
 fi
@@ -46,8 +38,9 @@ fi
 # Download and source this utility script - so that the functions are available for this script #
 #################################################################################################
 echo "==> Download the '${HOME}/.shellrc' for loading the utility functions"
-if ! type warn &> /dev/null 2>&1; then
-  ! test -f "${HOME}/.shellrc" && curl -fsSL "https://raw.githubusercontent.com/${GH_USERNAME}/dotfiles/refs/heads/${DOTFILES_BRANCH}/files/--HOME--/.shellrc" -o "${HOME}/.shellrc"
+# Check for one key function defined in .shellrc to see if sourcing is needed
+if ! type keep_sudo_alive &> /dev/null 2>&1; then
+  [[ ! -f "${HOME}/.shellrc" ]] && curl -fsSL "https://raw.githubusercontent.com/${GH_USERNAME}/dotfiles/refs/heads/${DOTFILES_BRANCH}/files/--HOME--/.shellrc" -o "${HOME}/.shellrc"
   FIRST_INSTALL=true source "${HOME}/.shellrc"
 else
   warn "skipping downloading and sourcing '$(yellow "${HOME}/.shellrc")' since its already loaded"
@@ -75,7 +68,8 @@ section_header 'Verifying FileVault status'
 # Install command line dev tools #
 ##################################
 section_header 'Installing xcode command-line tools'
-if ! is_directory '/Library/Developer/CommandLineTools/usr/bin'; then
+# Check if Xcode Command Line Tools are installed
+if ! xcode-select -p &> /dev/null; then
   # install using the non-gui cmd-line alone
   touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
   sudo softwareupdate -ia --agree-to-license --force
@@ -186,11 +180,15 @@ else
 fi
 # TODO: Need to investigate why this step exits on a vanilla OS's first run of this script
 # Note: Do not set the 'HOMEBREW_BASE_INSTALL' in this script - since its supposed to run idempotently. Also, don't run the cleanup of pre-installed brews/casks (for the same reason)
-brew bundle check || brew bundle || true
+# Run brew bundle install if check fails. Let brew handle idempotency. Continue script even if bundle fails.
+brew bundle check || brew bundle
 success 'Successfully installed cmd-line and gui apps using homebrew'
 
 # Note: Load all zsh config files for the 2nd time for PATH and other env vars to take effect (due to defensive programming)
 load_zsh_configs
+
+# Note: run the post-brew-install script once more (in case it wasn't run by the brew lifecycle due to some errors)
+post-brew-install.sh
 
 if is_non_zero_string "${KEYBASE_USERNAME}"; then
   ! command_exists keybase && error 'Keybase not found in the PATH. Aborting!!!'
@@ -233,17 +231,20 @@ if is_non_zero_string "${KEYBASE_USERNAME}"; then
     fi
     unset folder
 
-    # HACK: To fix issue where someone does not have any such 'DefaultProfile/chrome'.... (need to find a correct fix)
-    # otherwise, the next 'for' loop fails and errors out
-    ensure_dir_exists "${PERSONAL_PROFILES_DIR}/DummyProfile/Profiles/DefaultProfile/chrome"
-
-    for folder in "${PERSONAL_PROFILES_DIR}"/*Profile/Profiles/DefaultProfile/chrome; do
-      # Setup the chrome repo's upstream if it doesn't already point to UPSTREAM_GH_USERNAME's repo
-      add-upstream-git-config.sh "${folder}" "${UPSTREAM_GH_USERNAME}"
-    done
-    unset folder
-
-    rm -rf "${PERSONAL_PROFILES_DIR}/DummyProfile/"
+    # Use zsh glob qualifiers to only loop if matches exist and are directories
+    # (N) nullglob: if no match, the pattern expands to nothing
+    # (/): only match directories
+    local chrome_folders=("${PERSONAL_PROFILES_DIR}"/*Profile/Profiles/DefaultProfile/chrome(N/))
+    if [[ ${#chrome_folders[@]} -gt 0 ]]; then
+      for folder in "${chrome_folders[@]}"; do
+        # Setup the chrome repo's upstream if it doesn't already point to UPSTREAM_GH_USERNAME's repo
+        add-upstream-git-config.sh "${folder}" "${UPSTREAM_GH_USERNAME}"
+      done
+      unset folder
+    else
+      warn "No '*Profile/Profiles/DefaultProfile/chrome' directories found to set upstream for."
+    fi
+    unset chrome_folders
   else
     warn "skipping cloning of profiles repo since either the '$(yellow 'KEYBASE_PROFILES_REPO_NAME')' or the '$(yellow 'PERSONAL_PROFILES_DIR')' env var hasn't been set"
   fi
@@ -274,7 +275,8 @@ EOF
   # Resurrect repositories that I am interested in #
   ##################################################
   section_header 'Resurrecting repos'
-  for file in $(ls "${PERSONAL_CONFIGS_DIR}"/repositories-*.yml); do
+  # Use zsh glob qualifier (N.) for nullglob and regular files
+  for file in "${PERSONAL_CONFIGS_DIR}"/repositories-*.yml(N.); do
     resurrect-repositories.rb -r "${file}"
   done
   unset file
@@ -308,12 +310,18 @@ rm -rf "${HOME}/.ssh/known_hosts.old"
 #####################################################################################
 # Load the direnv config for the home folder so that it creates necessary sym-links #
 #####################################################################################
-ensure_safe_load_direnv "${HOME}"
+section_header "Allowing direnv for ${HOME}"
+if command_exists direnv && is_directory "${HOME}" && is_file "${HOME}/.envrc"; then
+  (cd "${HOME}" && direnv allow .) && success "Successfully allowed direnv for '$(yellow "${HOME}")'" || warn "Failed to allow direnv for '${HOME}'"
+fi
 
 #########################################################################################
 # Load the direnv config for the profiles folder so that it creates necessary sym-links #
 #########################################################################################
-ensure_safe_load_direnv "${PERSONAL_PROFILES_DIR}"
+section_header "Allowing direnv for ${PERSONAL_PROFILES_DIR}"
+if command_exists direnv && is_directory "${PERSONAL_PROFILES_DIR}" && is_file "${PERSONAL_PROFILES_DIR}/.envrc"; then
+  (cd "${PERSONAL_PROFILES_DIR}" && direnv allow .) && success "Successfully allowed direnv for '$(yellow "${PERSONAL_PROFILES_DIR}")'" || warn "Failed to allow direnv for '${PERSONAL_PROFILES_DIR}'"
+fi
 
 ###################################################################
 # Restore the preferences from the older machine into the new one #
@@ -326,11 +334,11 @@ else
   warn "skipping baselining of preferences since '$(yellow 'osx-defaults.sh')' couldn't be found in the PATH; Please baseline manually and follow it up with re-import of the backed-up preferences"
 fi
 
-if command_exists 'capture-defaults.sh'; then
-  capture-defaults.sh i
+if command_exists 'capture-prefs.sh'; then
+  capture-prefs.sh i
   success 'Successfully restored preferences from backup'
 else
-  warn "skipping importing of preferences since '$(yellow 'capture-defaults.sh')' couldn't be found in the PATH; Please set it up manually"
+  warn "skipping importing of preferences since '$(yellow 'capture-prefs.sh')' couldn't be found in the PATH; Please set it up manually"
 fi
 
 ################################
@@ -355,7 +363,6 @@ fi
 # Cleanup temp functions, etc #
 ###############################
 unfunction clone_omz_plugin_if_not_present
-unfunction ensure_safe_load_direnv
 
 # To install the latest versions of the hex, rebar and phoenix packages
 # mix local.hex --force && mix local.rebar --force
@@ -394,6 +401,13 @@ echo "$(yellow "1. set the 'RAYCAST_SETTINGS_PASSWORD' env var, and then run the
 echo "$(yellow "2. Run the 'bupc' alias to finish setting up all other applications managed by homebrew")"
 echo "$(yellow "3. MANUALLY QUIT AND RESTART iTerm2 and Terminal apps")"
 
-script_end_time=$(date +%s)
-echo "==> Script completed at: $(date)"
-echo "==> Total execution time: $((script_end_time - script_start_time)) seconds"
+# Record end time and calculate duration
+local end_time_seconds end_time_human duration duration_human
+end_time_seconds=$(date +%s)
+end_time_human=$(date '+%Y-%m-%d %H:%M:%S')
+duration=$((end_time_seconds - start_time_seconds))
+
+# Simple duration formatting (you could make this fancier if needed)
+duration_human=$(printf '%02dh:%02dm:%02ds' $((duration/3600)) $((duration%3600/60)) $((duration%60)))
+
+echo "Script finished at: ${end_time_human}. Total duration: ${duration_human} (${duration} seconds)."

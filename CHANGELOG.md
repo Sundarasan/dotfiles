@@ -2,6 +2,16 @@ As documented in the README's [adopting](README.md#how-to-adoptcustomize-the-scr
 
 For those who follow this repo, here's the changelog for ease of adoption:
 
+### 1.1-16
+
+* Ran gemini to optimize the shell configuration scripts aimed at optimizing the shell startup time.
+* Renamed 'scripts/capture-defaults.sh' to 'scripts/capture-prefs.sh'
+* Extracted 'setup_login_item' function from `~/.aliases` into a standalone script so as to avoid issues between bash vs zsh when running `postinstall` step in Brewfile.
+* *[capture-prefs.sh]* Extracted the whitelist of preferences into a separate file: [capture-prefs-domains.txt](./scripts/data/capture-prefs-domains.txt).
+* *[cleanup-browser-profiles.sh]* Extracted the whitelist of [files](./scripts/data/cleanup-browser-files.txt) and [directories](./scripts/data/cleanup-browser-dirs.txt) that needs to be cleaned into separate files.
+
+*Note*: This version has been successfully tested on a Macbook M1 on 2 May, 2025.
+
 ### 1.1-15
 
 * Added config settings file for `mise` to handle `idiomatic_version_file_enable_tools`

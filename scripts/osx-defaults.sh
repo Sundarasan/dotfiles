@@ -19,6 +19,7 @@ case "${1}" in
     ;;
 esac
 
+# Source helpers only once if any required function is missing
 type keep_sudo_alive &> /dev/null 2>&1 || source "${HOME}/.shellrc"
 
 ###############################################################################################

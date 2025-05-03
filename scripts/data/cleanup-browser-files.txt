@@ -1,0 +1,17 @@
+# General temp/cache files
+.DS_Store # macOS specific
+.localized
+.parentlock
+*.log
+*.sqlite-shm
+*.sqlite-wal
+*.bak*
+compatibility.ini
+sessionstore.bak # Firefox session backup
+# Thunderbird specific (can be large/rebuilt)
+extensions.rdf # Old extension format cache
+msgFilterRules.dat # Message filter rules backup
+popstate.dat # POP3 mail state
+signons*.txt # Old password format
+*healthreport*
+global-messages-db.sqlite

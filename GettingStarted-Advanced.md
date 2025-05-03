@@ -2,7 +2,7 @@
 
 1. Make sure that you have logged into `Keybase` either via the application or the command-line. The script will error out with an appropriate message if you haven't done so.
 
-This portion of the script will setup the home folder repo, the browser profiles, resurrect the repositories that you have created a registry for, install all the programming languages (each specific version of each language) using [mise](https://github.com/jdx/mise), apply some [OSX defaults](scripts/osx-defaults.sh) and finally re-import your preferences that were captured from the old machine using the [capture-defaults](scripts/capture-defaults.sh) script.
+This portion of the script will setup the home folder repo, the browser profiles, resurrect the repositories that you have created a registry for, install all the programming languages (each specific version of each language) using [mise](https://github.com/jdx/mise), apply some [OSX defaults](scripts/osx-defaults.sh) and finally re-import your preferences that were captured from the old machine using the [capture-prefs](scripts/capture-prefs.sh) script.
 
 **Important Note** After the above script has completed running successfully, you need to do the following *manually*
 

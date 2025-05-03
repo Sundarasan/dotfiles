@@ -19,7 +19,7 @@ Note:
 
 * This script is idempotent ie it can be run any number of times safely, it will not corrrupt the system.
 
-## capture-defaults.sh
+## capture-prefs.sh
 
 This script is useful to capture the preferences of the known applications (both system-installed and custom-installed applications) using the `defaults read` command. It can be used to both export the preferences/settings (from the old system) or import them (into the new system)
 
@@ -87,6 +87,10 @@ The config file for this script is a yaml file that is passed into this script a
 * `other_remotes` (optional) specifies a hash of the other remotes keyed by the name with the value of the remote url
 * `active` (optional; default: false) specifies whether to set this folder/repo up or not on local
 * `post_clone` (optional; default: empty array) specifies other `bash` commands (in sequence) to be run once the resurrection is done - for eg, symlink a '.envrc' file if one exists
+
+## setup-login-item.sh
+
+This script was originally present as a function within the `~/.aliases` file, but, since loading this became cumbersome within `bash` (as part of the post-installation step for specific casks), it made sense to extract it out as a standalone script. This script will be used to setup specific applications as login items in the macOS system preferences.
 
 ## software-updates-cron.sh
 

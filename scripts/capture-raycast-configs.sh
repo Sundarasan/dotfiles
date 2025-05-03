@@ -7,7 +7,13 @@
 # This script will export/import the raycast configs to/from the location specified in the target directory.
 # Reference for keystrokes/keycodes: https://eastmanreference.com/complete-list-of-applescript-key-codes
 
-type red &> /dev/null 2>&1 || source "${HOME}/.shellrc"
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+# Source shellrc only once if any required function is missing
+if ! type red &> /dev/null 2>&1 || ! type yellow &> /dev/null 2>&1 || ! type ensure_dir_exists &> /dev/null 2>&1 || ! type is_file &> /dev/null 2>&1 || ! type error &> /dev/null 2>&1 || ! type success &> /dev/null 2>&1 || ! type is_non_zero_string &> /dev/null 2>&1 ; then
+  source "${HOME}/.shellrc"
+fi
 
 usage() {
   echo "$(red "Usage"): $(yellow "${1} <e/i> <target-dir-location>")"

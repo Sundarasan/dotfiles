@@ -12,16 +12,11 @@
 ################################################################################
 
 # execute 'FIRST_INSTALL=true zsh' to debug the load order of the custom zsh configuration files
-test -n "${FIRST_INSTALL+1}" && echo "loading ${0}"
+[[ -n "${FIRST_INSTALL+1}" ]] && echo "loading ${0}"
 
 export LANG='en_US.UTF-8'
-export LANGUAGE='en_US.UTF-8'
-export LC_COLLATE='en_US.UTF-8'
-export LC_CTYPE='en_US.UTF-8'
-export LC_MESSAGES='en_US.UTF-8'
-export LC_MONETARY='en_US.UTF-8'
-export LC_NUMERIC='en_US.UTF-8'
-export LC_TIME='en_US.UTF-8'
+# Setting LC_ALL overrides all other LC_* variables.
+# LANG is kept as a fallback.
 export LC_ALL='en_US.UTF-8'
 export LESSCHARSET='utf-8'
 
@@ -32,8 +27,11 @@ export XDG_DATA_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}"
 export XDG_STATE_HOME="${XDG_STATE_HOME:-${HOME}/.local/state}"
 
 # Moving homebrew env vars here itself so that the initial homebrew installation on a vanilla OS can be done/applied into memory immediately
-export ARCH="$(uname -m)"
-export ARCHFLAGS="-arch ${ARCH}"
+# Cache the architecture check to avoid calling `uname` repeatedly
+if [[ -z "${ARCH}" ]]; then
+  export ARCH="$(uname -m)"
+  export ARCHFLAGS="-arch ${ARCH}"
+fi
 if [[ "${ARCH}" =~ 'arm' ]]; then
   export HOMEBREW_PREFIX='/opt/homebrew'
 else
@@ -162,7 +160,6 @@ warn() {
 
 debug() {
   echo "$(light_purple '**DEBUG**') ${1}"
-  echo "${PATH}"
 }
 
 error() {
@@ -176,7 +173,7 @@ section_header() {
 }
 
 is_non_zero_string() {
-  test -n "${1}"
+  [[ -n "${1}" ]]
 }
 
 # Remove trailing slash if present
@@ -191,15 +188,15 @@ extract_last_segment() {
 }
 
 is_file() {
-  is_non_zero_string "${1}" && test -f "${1}"
+  is_non_zero_string "${1}" && [[ -f "${1}" ]]
 }
 
 is_executable() {
-  is_non_zero_string "${1}" && test -e "${1}"
+  is_non_zero_string "${1}" && [[ -x "${1}" ]]
 }
 
 is_directory() {
-  is_non_zero_string "${1}" && test -d "${1}"
+  is_non_zero_string "${1}" && [[ -d "${1}" ]]
 }
 
 dir_has_children() {
@@ -237,6 +234,10 @@ is_zsh() {
 }
 
 if is_zsh; then
+  # Function to reload Zsh configuration files.
+  # WARNING: Sourcing .zshenv/.zshrc/.zlogin from a file that might be sourced *by* them
+  # can lead to infinite loops or unexpected behavior if not called carefully.
+  # This is likely intended for manual use or specific bootstrap scenarios after config changes.
   # Note: This function is kind of equivalent to 'omz reload', but that doesn't seem to work when installing on a vanilla OS
   load_zsh_configs() {
     local file_list=('.zshenv' '.zshrc' '.zlogin')
@@ -299,7 +300,7 @@ build_keybase_repo_url() {
 }
 
 folder_size() {
-  echo $(cyan "$(\du -sh "${1}" | cut -f1)")
+  echo $(cyan "$(/usr/bin/du -sh "${1}" | cut -f1)")
 }
 
 clone_repo_into() {
@@ -333,11 +334,13 @@ clone_repo_into() {
 set_ssh_folder_permissions() {
   local target_folder="${HOME}/.ssh"
   ensure_dir_exists "${target_folder}"
+  # Set directory permissions first
+  chmod 700 "${target_folder}"
   if dir_has_children "${target_folder}"; then
-    chmod -R 600 "${target_folder}"/*
-    success "Successfully set permissions for all files in '$(yellow "${target_folder}")'"
+    find "${target_folder}" -type f -exec chmod 600 {} \;
+    success "Ensured correct permissions for '$(yellow "${target_folder}")' and files within it."
   else
-    warn "Couldn't find any files in '$(yellow "${target_folder}")' to set permissions for"
+    warn "'$(yellow "${target_folder}")' exists but is empty. No file permissions to set."
   fi
   unset target_folder
 }
