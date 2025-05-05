@@ -2,6 +2,14 @@ As documented in the README's [adopting](README.md#how-to-adoptcustomize-the-scr
 
 For those who follow this repo, here's the changelog for ease of adoption:
 
+### 1.1-17
+
+* *[software-updates-cron.sh]* Removed parallelism (something that was introduced in the previous version when optimzing using gemini) - since this was causing lots of confusion when looking through the logs.
+* *[gitconfig]* Removed `editor` config setting since that's already being governed by the env var `EDITOR` set from `~/.zshrc`.
+* *[Brewfile]* Removed unused tools / added new tools.
+* *[capture-prefs-domains.txt]* Added entries to capture PdfGear, TinkerTool, UTM.
+* Removed partial line comments from the other config data files since they are inconsistent/might cause issues when parsing / applying them during the cleanup steps.
+
 ### 1.1-16
 
 * Ran gemini to optimize the shell configuration scripts aimed at optimizing the shell startup time.
@@ -23,7 +31,7 @@ For those who follow this repo, here's the changelog for ease of adoption:
 ### 1.1-13
 
 * *[Brewfile]* Removed deprecated vscode plugins.
-* *[software-updates-cron]* Fix issue with BetterFox user.js not being put in correct Firefox profile; Added BetterZen's user.js into Zen profile.
+* *[software-updates-cron.sh]* Fix issue with BetterFox user.js not being put in correct Firefox profile; Added BetterZen's user.js into Zen profile.
 
 ### 1.1-12
 

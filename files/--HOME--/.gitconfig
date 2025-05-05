@@ -212,7 +212,6 @@
 [core]
   autocrlf = input
   commentChar = *
-  editor = code --wait
   excludesFile = ~/.gitignore_global
   fsMonitor = true
   pager = diff-so-fancy | less --tabs=2 -RFX

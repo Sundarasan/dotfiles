@@ -95,6 +95,7 @@ cask 'raycast', postinstall: "\"${HOME}/.dotfiles/scripts/setup-login-item.sh\" 
 cask 'stats', postinstall: "\"${HOME}/.dotfiles/scripts/setup-login-item.sh\" 'Stats'"
 cask 'the-unarchiver'
 # cask 'thunderbird@daily'
+cask 'utm'
 cask 'vscodium@insiders'   # TODO: Doesn't handle 'Remote Containers' and GH-based auto-syncing when compared to VSCode
 cask 'zen-browser@twilight'
 cask 'zoom'
@@ -152,8 +153,8 @@ end
 # Moved these brew and cask lines to clean up the noise from the above alphabetically sorted lists
 
 # ---- zen-browser development
-brew 'gnu-tar'
-brew 'mercurial'
+# brew 'gnu-tar'
+# brew 'mercurial'
 
 # ---- docker utilities
 # brew 'dive'   # docker layers inspection on steroids
@@ -195,4 +196,3 @@ brew 'mercurial'
 # cask 'netspot'
 # cask 'ngrok'
 # cask 'tempbox'
-# cask 'virtualbox'

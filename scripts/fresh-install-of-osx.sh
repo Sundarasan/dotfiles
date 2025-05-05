@@ -371,16 +371,6 @@ unfunction clone_omz_plugin_if_not_present
 # To install the native-image tool after graalvm is installed
 # gu install native-image
 
-# Enabling history for iex shell (might need to be done for each erl that is installed via mise)
-# rm -rf tmp
-# ensure_dir_exists tmp
-# cd tmp || exit
-# git clone https://github.com/ferd/erlang-history.git
-# cd erlang-history || exit
-# sudo make install
-# cd ../.. || exit
-# rm -rf tmp
-
 # vagrant plugin install vagrant-vbguest
 
 # if installing jhipster for dot-net-core
