@@ -66,11 +66,9 @@ zstyle ':omz:update' frequency 1
 
 # Set plugin options that are needed before each plugin is loaded
 zstyle ':omz:plugins:eza' 'icons' yes
-# zstyle ':omz:plugins:eza' 'git-status' yes
-# zstyle ':omz:plugins:eza' 'header' yes
+# zstyle ':omz:plugins:eza' 'git-status' no
+# zstyle ':omz:plugins:eza' 'header' no
 zstyle :omz:plugins:iterm2 shell-integration yes
-zstyle ':completion:*:*:docker:*' option-stacking yes
-zstyle ':completion:*:*:docker-*:*' option-stacking yes
 
 # Uncomment the following line if pasting URLs and other text is messed up.
 # DISABLE_MAGIC_FUNCTIONS="true"
@@ -193,7 +191,7 @@ if is_macos; then
   setopt null_glob                # ignore errors when file globs don't match anything
 
   # console colors
-  autoload -U colors && colors
+  autoload -Uz colors && colors
 
   # colorize completion
   # zstyle ':completion:*:*:kill:*:processes' list-colors "=(#b) #([0-9]#)*=$color[cyan]=$color[red]"
@@ -245,10 +243,10 @@ if is_macos; then
   # Use modern completion system (needs to be run AFTER some zstyle defns; usually a good idea to do so after all of them)
   autoload -Uz compinit && compinit -C -d "${XDG_CACHE_HOME}/zcompdump-${ZSH_VERSION}"
 
-  autoload -U _git
+  autoload -Uz _git
 
   # Turn on autocomplete predictions
-  autoload -U incremental-complete-word predict-on
+  autoload -Uz incremental-complete-word predict-on
   zle -N incremental-complete-word
   zle -N predict-on
   zle -N predict-off

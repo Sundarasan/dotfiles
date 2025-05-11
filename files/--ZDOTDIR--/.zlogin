@@ -26,19 +26,26 @@ recompile_zsh_scripts() {
 }
 
 find_in_folder_and_recompile() {
-  ! is_directory "${1}" && return
+  local dir_to_scan="${1}"
+  local f # Loop variable
 
-  # TODO: This still doesn't handle '.pnpm' folders - need to investigate later
-  for f in $(find "${1}" -maxdepth 5 -name "*.sh" -o -name "*.zsh" ! -path "**/node_modules/**"); do
+  if ! is_directory "${dir_to_scan}"; then
+    echo "Warning: Directory '${dir_to_scan}' not found for zsh script recompilation." >&2
+    return
+  fi
+
+  find "${dir_to_scan}" -maxdepth 5 \
+    \( \( -name "node_modules" -o -name ".pnpm" \) -type d -prune \) -o \
+    \( \( -name "*.sh" -o -name "*.zsh" \) -type f -print0 \) |
+    while IFS= read -r -d $'\0' f; do
     recompile_zsh_scripts "${f}"
   done
-  unset f
 }
 
 # Execute code in the background to not affect the current session
 (
   # <https://github.com/zimfw/zimfw/blob/master/login_init.zsh>
-  autoload -U zrecompile
+  autoload -Uz zrecompile
 
   # zsh config files can be compiled to improve performance
   # Based from: https://github.com/romkatv/zsh-bench/blob/master/configs/ohmyzsh%2B/setup

@@ -3,7 +3,6 @@
 !.bundle/config
 !.keep
 
-__pycache__
 .~lock*#
 .babel.json
 .boxfuse/
@@ -14,9 +13,7 @@ __pycache__
 .dartServer/
 .docker/
 .dotnet/
-.DS_Store
 .electron-gyp
-.env
 .erlang-hist*
 .hawtjni/
 .helm/**/*.tgz
@@ -47,10 +44,10 @@ __pycache__
 *.db-wal
 *.fish
 *.iso
-*.log
 *.sqlite-shm
 *.sqlite-wal
 *.sw[nop]
+*.zcompdump*
 **/Skype/**/media_messaging/
 *db-shm
 *db-wal
@@ -62,7 +59,6 @@ __pycache__
 /.aspnet/DataProtection-Keys/
 /.bash_history
 /.bash_sessions
-/.dotfiles/
 /.boot2docker/*
 /.BuildServer
 /.cache/
@@ -99,6 +95,7 @@ __pycache__
 /.cups/
 /.cvecheck/cvecheck-runtime.properties
 /.dmrc
+/.dotfiles/
 /.dropbox*
 /.dvdcss
 /.eclipse/**/cache
@@ -119,11 +116,11 @@ __pycache__
 /.helm
 /.heroku
 /.hex
-/.irb_history
 /.ICEauthority
 /.ideaLibSources/
 /.install4j
 /.IntelliJIdea*/restart/restarter
+/.irb_history
 /.ivy2/
 /.java-caller/
 /.keepassx/
@@ -196,7 +193,6 @@ __pycache__
 /.yarn/berry/telemetry.json
 /.yarnrc
 /.yjp
-/.zcompdump*
 /.zoomus
 /.zsh_history
 /.zsh_sessions/
@@ -253,6 +249,7 @@ tmp/
 /.config/bat/config
 /.config/btop/btop.conf
 /.config/mise/config.toml
+/.config/rubocop/config.yml
 /.cshrc
 /.curlrc
 /.default-gems
