@@ -87,6 +87,7 @@
 /.config/xbuild/pkgconfig-cache-2.xml
 /.config/zed/.tmp*
 /.config/zed/embeddings
+/.config/zsh/
 /.continue/calculator.py
 /.continue/config.py
 /.continue/server

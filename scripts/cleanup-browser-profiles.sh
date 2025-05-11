@@ -9,9 +9,7 @@ set -e
 
 # Source shellrc only once if any required function is missing
 # Check for one key function defined in .shellrc to see if sourcing is needed
-if ! type info &> /dev/null 2>&1; then
-  source "${HOME}/.shellrc"
-fi
+type is_file &> /dev/null 2>&1 || source "${HOME}/.shellrc"
 
 vacuum_browser_profile_folder() {
   local browser_name="${1}"   # Passed browser name
@@ -26,9 +24,7 @@ vacuum_browser_profile_folder() {
   ! is_directory "${profile_folder}" && warn "skipping processing of '$(yellow "${profile_folder}")' since it doesn't exist" && return
 
   section_header "Vacuuming '${browser_name}' in '${profile_folder}'..."
-  local size_before
-  size_before=$(folder_size "${profile_folder}") || size_before="N/A" # Handle potential error in folder_size
-  echo "--> Size before: ${size_before}"
+  echo "--> Size before: $(folder_size "${profile_folder}")"
 
   if command_exists sqlite3; then
     # Use xargs to run sqlite3 vacuum/reindex in parallel, passing multiple files to each zsh instance
@@ -90,9 +86,7 @@ vacuum_browser_profile_folder() {
       if ! "${combined_find_cmd[@]}"; then warn "Combined find/delete operation failed (code: $?) in '${profile_folder}'."; fi
   fi
 
-  local size_after
-  size_after=$(folder_size "${profile_folder}") || size_after="N/A" # Handle potential error
-  echo "--> Size after: ${size_after}"
+  echo "--> Size after: $(folder_size "${profile_folder}")"
   success "Successfully processed profile folder for '$(yellow "${browser_name}")'"
 }
 

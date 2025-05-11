@@ -313,6 +313,19 @@ export RSPEC="true"
 # fzy
 # load_file_if_exists "${HOME}/.fzy-key-bindings.zsh"
 
+if is_directory "${XDG_CONFIG_HOME}/zsh"; then
+  # register folder for custom zsh functions to be lazy-loaded
+  append_to_fpath_if_dir_exists "${XDG_CONFIG_HOME}/zsh"
+
+  # Dynamically autoload all files in the custom zsh functions directory.
+  # Assumes the filename is the function name.
+  local func_file
+  for func_file in "${XDG_CONFIG_HOME}"/zsh/*(N); do
+    autoload -Uz "${func_file}"
+  done
+  unset func_file
+fi
+
 # remove empty components to avoid '::' ending up + resulting in './' being in $PATH, etc
 path=( "${path[@]:#}" )
 fpath=( "${fpath[@]:#}" )

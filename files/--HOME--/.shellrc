@@ -221,9 +221,9 @@ load_file_if_exists() {
   is_file "${1}" && source "${1}"
 }
 
-delete_directory_if_exists() {
-  is_directory "${1}" && echo "$(red 'Deleting') '$(green "${1}")'" && sudo rm -rf "${1}"
-}
+# delete_directory_if_exists() {
+#   is_directory "${1}" && echo "$(red 'Deleting') '$(green "${1}")'" && sudo rm -rf "${1}"
+# }
 
 command_exists() {
   type "${1}" &> /dev/null 2>&1
@@ -300,13 +300,15 @@ build_keybase_repo_url() {
 }
 
 folder_size() {
-  echo $(cyan "$(/usr/bin/du -sh "${1}" | cut -f1)")
+  local folder="${1:-$(pwd)}"
+  echo "$(yellow "$(realpath "${folder}")") --> $(cyan "$(/usr/bin/du -sh "${folder}" | cut -f1)") bytes"
 }
 
 clone_repo_into() {
   local target_folder="${2}"
   ensure_dir_exists "${target_folder}"
   if ! is_git_repo "${target_folder}"; then
+    # Since git does not allow cloning into a non-empty folder (like the home folder), clone into a temp folder, then copy the .git folder into the real target location, and do a checkout
     local tmp_folder="$(mktemp -d)"
     # Note: Do not use --depth while cloning since that messes up when using upstream to rebase from
     git -C "${tmp_folder}" clone -q "${1}" .

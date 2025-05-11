@@ -6,8 +6,7 @@
 # It assumes that a pre-existing repo on local is present - so that it can capture the relevant remote details.
 # It will force removal of history if the `-f` flag is given. (The history of the profiles repo will always get deleted).
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
+# Do not exit immediately if a command exits with a non-zero status since this is run even if there's no cron entry
 
 # Source shell helpers if they aren't already loaded (check for one representative function)
 if ! type red &> /dev/null 2>&1 || ! type strip_trailing_slash &> /dev/null 2>&1; then

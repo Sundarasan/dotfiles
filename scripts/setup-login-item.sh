@@ -6,9 +6,7 @@
 # Do not exit immediately if a command exits with a non-zero status since this is run within a cronjob
 
 # Source helpers only once if any required function is missing
-if ! type is_directory &> /dev/null 2>&1 ; then
-  source "${HOME}/.shellrc"
-fi
+type is_directory &> /dev/null 2>&1 || source "${HOME}/.shellrc"
 
 local app_path="/Applications/${1}.app"
 if is_directory "${app_path}"; then

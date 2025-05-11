@@ -14,7 +14,7 @@ if ! type is_file &> /dev/null 2>&1 || ! type warn &> /dev/null 2>&1 ; then
   source "${HOME}/.shellrc"
 fi
 
-if ! ioreg -c AppleBiometricSensor | grep -q AppleBiometricSensor; then
+if ! ioreg -c AppleBiometricSensor | \grep -q AppleBiometricSensor; then
   warn 'Touch ID hardware is not detected. Skipping configuration.'
   exit 0 # Exit successfully as no action is needed
 fi
