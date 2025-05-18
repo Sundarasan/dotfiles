@@ -70,6 +70,16 @@ else
   warn 'skipping symlinking idea/idea-ce for command-line invocation'
 fi
 
+section_header 'Linking zed for command-line invocation'
+if is_directory '/Applications/Zed Preview.app'; then
+  replace_symlink_if_needed "${HOMEBREW_PREFIX}/bin/zed-preview" "${HOMEBREW_PREFIX}/bin/zed"
+  replace_symlink_if_needed '/Applications/Zed Preview.app/Contents/MacOS/cli' "${HOMEBREW_PREFIX}/bin/zed-preview"
+elif is_directory '/Applications/Zed.app'; then
+  replace_symlink_if_needed '/Applications/Zed.app/Contents/MacOS/cli' "${HOMEBREW_PREFIX}/bin/zed"
+else
+  warn 'skipping symlinking zed for command-line invocation'
+fi
+
 # Setup the login items once the full list of applications has been installed on the machine
 "${DOTFILES_DIR}/scripts/setup-login-item.sh" 'ZoomHider'
 
