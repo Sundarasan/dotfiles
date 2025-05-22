@@ -73,14 +73,12 @@ brew 'tldr'
 # cask 'batteryboi'
 # cask 'battery-toolkit' #, postinstall: "\"${HOME}/.dotfiles/scripts/setup-login-item.sh\" 'Battery Toolkit'"
 cask 'aldente', postinstall: "\"${HOME}/.dotfiles/scripts/setup-login-item.sh\" 'AlDente'"
-cask 'appcleaner'
 cask 'brave-browser'
 cask 'clocker', postinstall: "\"${HOME}/.dotfiles/scripts/setup-login-item.sh\" 'Clocker'"
 cask 'fliqlo'
 cask 'firefox@nightly' #, greedy: true
 cask 'jordanbaird-ice', postinstall: "\"${HOME}/.dotfiles/scripts/setup-login-item.sh\" 'Ice'" if OS::Mac::version >= 14
 cask 'keepassxc@beta'
-cask 'keepingyouawake', postinstall: "\"${HOME}/.dotfiles/scripts/setup-login-item.sh\" 'KeepingYouAwake'"
 cask 'keycastr'
 cask 'keyclu' if is_arm
 cask 'knockknock'
@@ -89,6 +87,7 @@ cask 'notunes'
 cask 'ollama', restart_service: :changed
 cask 'onlyoffice'
 cask 'onyx'
+cask 'pearcleaner', postinstall: "\"${HOME}/.dotfiles/scripts/setup-login-item.sh\" 'PearCleaner'"
 cask 'protonvpn'
 cask 'rancher'
 cask 'raycast', postinstall: "\"${HOME}/.dotfiles/scripts/setup-login-item.sh\" 'Raycast'"

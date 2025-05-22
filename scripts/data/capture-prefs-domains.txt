@@ -3,6 +3,7 @@ asc.onlyoffice.ONLYOFFICE
 ch.protonvpn.mac
 com.0804Team.KeyClu
 com.abhishek.Clocker
+com.alienator88.Pearcleaner
 com.apphousekitchen.aldente-pro
 com.apple.Accessibility
 com.apple.Accessibility-Settings.extension
@@ -285,7 +286,6 @@ com.visualstudio.code.oss
 com.vscodium.VSCodiumInsiders
 eu.exelban.Stats
 familycircled
-info.marcel-dierkes.KeepingYouAwake
 io.github.keycastr
 io.rancherdesktop.app
 keybase.Electron
@@ -293,7 +293,6 @@ loginwindow
 mbuseragent
 me.mhaeuser.BatteryToolkit
 menu.nomad.DEPNotify
-net.freemacsoft.AppCleaner
 net.sourceforge.Monolingual
 NSGlobalDomain
 org.cups.PrintingPrefs

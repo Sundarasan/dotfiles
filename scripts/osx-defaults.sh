@@ -1338,16 +1338,6 @@ fi
 #     );
 # }
 
-
-###############################################################################
-# AppCleaner                                                                  #
-###############################################################################
-if ask "AppCleaner settings" Y; then
-  defaults write net.freemacsoft.AppCleaner SUAutomaticallyUpdate -bool true
-  defaults write net.freemacsoft.AppCleaner SUEnableAutomaticChecks -bool true
-  defaults write net.freemacsoft.AppCleaner SUSendProfileInfo -bool false
-fi
-
 ###############################################################################
 # Hour - World Clock                                                          #
 ###############################################################################
@@ -1450,14 +1440,6 @@ if ask "Rectangle settings" Y; then
   defaults write com.knollsoft.Rectangle alternateDefaultShortcuts -bool true
   defaults write com.knollsoft.Rectangle launchOnLogin -bool true
   defaults write com.knollsoft.Rectangle subsequentExecutionMode -bool true
-fi
-
-###############################################################################
-# KeepingYouAwake                                                             #
-###############################################################################
-if ask "KeepingYouAwake settings" Y; then
-  defaults write info.marcel-dierkes.KeepingYouAwake "info.marcel-dierkes.KeepingYouAwake.BatteryCapacityThreshold" -int 20
-  defaults write info.marcel-dierkes.KeepingYouAwake "info.marcel-dierkes.KeepingYouAwake.BatteryCapacityThresholdEnabled" -bool true
 fi
 
 ###############################################################################

@@ -2,6 +2,10 @@ As documented in the README's [adopting](README.md#how-to-adoptcustomize-the-scr
 
 For those who follow this repo, here's the changelog for ease of adoption:
 
+### 1.1-21
+
+* *[Brewfile]* Replace AppCleaner with PearCleaner, and KeepingYouAwake with an extension to Raycast (Coffee).
+
 ### 1.1-20
 
 * *[Brewfile]* Trial to check if returning `0` will make the fresh installation script continue without needing to be rerun.
