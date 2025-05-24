@@ -105,7 +105,7 @@ mas 'PDFgear', id: 6469021132
 
 # VSCode extensions
 # Note: I don't want brew to silently install VS Code (which is what it does currently if the following lines are present but it doesn't find code!)
-is_vscode_installed = !`which code`.chomp.empty?
+is_vscode_installed = !`PATH=/opt/homebrew/bin:/usr/local/bin:${PATH} which code`.chomp.empty?  # explicitly set PATH since the shell being opened doesn't run the login configs
 if is_vscode_installed
   # This is failing on different machines
   # vscode 'formulahendry.code-runner'
@@ -127,7 +127,7 @@ if is_vscode_installed
   vscode 'editorconfig.editorconfig'
   vscode 'esbenp.prettier-vscode'
   vscode 'genuitecllc.codetogether'
-  vscode 'Google.geminicodeassist'
+  vscode 'google.geminicodeassist'
   vscode 'ibm.output-colorizer'
   vscode 'mechatroner.rainbow-csv'
   vscode 'mikestead.dotenv'

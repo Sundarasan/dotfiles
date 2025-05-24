@@ -2,6 +2,10 @@ As documented in the README's [adopting](README.md#how-to-adoptcustomize-the-scr
 
 For those who follow this repo, here's the changelog for ease of adoption:
 
+### 1.1-22
+
+* *[Brewfile]* Fix issue with vscode not being in PATH when running `bupc` command.
+
 ### 1.1-21
 
 * *[Brewfile]* Replace AppCleaner with PearCleaner, and KeepingYouAwake with an extension to Raycast (Coffee).
